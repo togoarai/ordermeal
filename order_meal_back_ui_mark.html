@@ -573,8 +573,11 @@
             }
         }
 
+        // 將這行換成您之後取得的 Google Apps Script 網址
+        const GOOGLE_SCRIPT_URL = ""; 
+
         // CRUD Actions
-        function saveOrder(e) {
+        async function saveOrder(e) {
             e.preventDefault();
             
             const id = document.getElementById('orderId').value;
@@ -585,21 +588,54 @@
                 status: document.getElementById('status').value
             };
 
-            if(id) {
-                // Update
-                const index = orders.findIndex(o => o.id == parseInt(id));
-                if(index > -1) {
-                    orders[index] = { id: parseInt(id), ...payload };
-                    showToast('訂單已更新成功！', 'success');
-                }
-            } else {
-                // Create
-                orders.push({ id: currentId++, ...payload });
-                showToast('已新增一筆訂單！', 'success');
-            }
+            // 按鈕防呆與 Loading 狀態
+            const submitBtn = document.querySelector('#orderForm button[type="submit"]');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerText = '儲存中...';
+            submitBtn.disabled = true;
 
-            closeModal();
-            filterTable(); // re-render with current filter
+            try {
+                if(id) {
+                    // Update 本機 (若要同步 Update 回 Sheet 需較複雜之 Apps Script，此處示範本機)
+                    const index = orders.findIndex(o => o.id == parseInt(id));
+                    if(index > -1) {
+                        orders[index] = { id: parseInt(id), ...payload };
+                        showToast('訂單已更新成功！(目前僅改本機)', 'success');
+                    }
+                } else {
+                    // Create - 新增訂單資料
+                    payload.id = currentId++;
+                    orders.push(payload);
+
+                    // 如果有填寫網址，就打 API 同步到 Google 試算表
+                    if (GOOGLE_SCRIPT_URL.startsWith('http')) {
+                        // 使用 URLSearchParams 避免 CORS preflight (OPTIONS) 問題
+                        const formData = new URLSearchParams();
+                        formData.append('name', payload.name);
+                        formData.append('meal', payload.meal);
+                        formData.append('drink', payload.drink);
+                        formData.append('status', payload.status);
+
+                        // 發送 POST 請求給 Google Apps Script
+                        await fetch(GOOGLE_SCRIPT_URL, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        showToast('已新增訂單，並同步上傳至 Google 試算表！', 'success');
+                    } else {
+                        showToast('已新增訂單！(未設定 Google API，僅暫存本機)', 'success');
+                    }
+                }
+
+                closeModal();
+                filterTable(); // re-render with current filter
+            } catch (err) {
+                console.error(err);
+                showToast('連線失敗，無法將資料送到試算表', 'error');
+            } finally {
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
         }
 
         function deleteOrderPrompt(id) {
