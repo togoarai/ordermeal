@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>點餐系統後台管理 | 2026應用開發部</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icon -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --secondary: #10B981;
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --bg-color: #0f172a;
+            --surface: rgba(30, 41, 59, 0.7);
+            --surface-hover: rgba(30, 41, 59, 0.9);
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Glassmorphism Header */
+        header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60A5FA, #A78BFA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .container {
+            flex: 1;
+            padding: 2rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Top Actions */
+        .page-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 9999px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-hover);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            cursor: pointer;
+        }
+        .btn-icon:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        /* Glassmorphism Table */
+        .table-container {
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s ease;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr {
+            transition: background 0.3s ease;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-ok {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #FBBF24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Modal Settings */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            color: var(--text-main);
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        /* Form Design */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            outline: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394A3B8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.25rem;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success i { color: #10B981; }
+        .toast.error i { color: #EF4444; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-utensils"></i> 2026 績效餐登記系統</h1>
+        <div class="user-info">
+            <span style="color: var(--text-muted);">應用開發部</span> | 
+            <span style="font-weight: 500;">管理員模式</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-actions">
+            <div class="search-box">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="searchInput" placeholder="搜尋姓名或餐點..." onkeyup="filterTable()">
+            </div>
+            <button class="btn" onclick="openModal()"><i class="fa-solid fa-plus"></i> 新增訂單</button>
+        </div>
+
+        <div class="table-container">
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>序號</th>
+                        <th>姓名</th>
+                        <th>餐點選擇</th>
+                        <th>飲料選擇</th>
+                        <th>狀態</th>
+                        <th width="120">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal for Create/Update -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">新增訂單</h2>
+                <button class="close-btn" type="button" onclick="closeModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="orderForm" onsubmit="saveOrder(event)">
+                <input type="hidden" id="orderId">
+                <div class="form-group">
+                    <label for="name">姓名</label>
+                    <input type="text" id="name" class="form-control" placeholder="請輸入姓名" required>
+                </div>
+                <div class="form-group">
+                    <label for="meal">餐點選擇</label>
+                    <select id="meal" class="form-control" required>
+                        <option value="" disabled selected>請選擇餐點</option>
+                        <option value="油蔥舒肥雞霸氣會議餐盒">油蔥舒肥雞霸氣會議餐盒</option>
+                        <option value="爺爺蒲燒魚霸氣會議餐盒">爺爺蒲燒魚霸氣會議餐盒</option>
+                        <option value="招牌椒麻豬排霸氣會議餐盒">招牌椒麻豬排霸氣會議餐盒</option>
+                        <option value="原味椒鹽炸雞霸氣會議餐盒">原味椒鹽炸雞霸氣會議餐盒</option>
+                        <option value="排骨特餐">排骨特餐</option>
+                        <option value="雞腿特餐">雞腿特餐</option>
+                        <option value="叉燒特餐">叉燒特餐</option>
+                        <option value="素食">素食</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="drink">飲料選擇</label>
+                    <select id="drink" class="form-control" required>
+                        <option value="" disabled selected>請選擇飲料</option>
+                        <option value="桂香青檸粉粿 (無糖微冰)">桂香青檸粉粿 (無糖微冰)</option>
+                        <option value="珍珠大正紅茶拿鐵 (微糖微冰)">珍珠大正紅茶拿鐵 (微糖微冰)</option>
+                        <option value="原片初露青茶 (無糖微冰)">原片初露青茶 (無糖微冰)</option>
+                        <option value="紅柚翡翠">紅柚翡翠</option>
+                        <option value="珍珠奶茶">珍珠奶茶</option>
+                        <option value="青四季春">青四季春</option>
+                        <option value="不需要飲料">不需要飲料</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="status">狀態/確認</label>
+                    <select id="status" class="form-control">
+                        <option value="Pending">待確認 (Pending)</option>
+                        <option value="OK">已確認 (OK)</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-outline" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal for Delete Confirmation -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>確認刪除</h2>
+                <button class="close-btn" type="button" onclick="closeDeleteModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <p style="margin-bottom: 2rem; color: var(--text-muted);">您確定要刪除這筆訂單嗎？此動作無法復原。</p>
+            <input type="hidden" id="deleteId">
+            <div class="form-actions">
+                <button type="button" class="btn-outline" onclick="closeDeleteModal()">取消</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">確認刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Initial Data Mock
+        let currentId = 3;
+        let orders = [
+            { id: 1, name: '高念平', meal: '油蔥舒肥雞霸氣會議餐盒', drink: '桂香青檸粉粿 (無糖微冰)', status: 'OK' },
+            { id: 2, name: '游國楷', meal: '爺爺蒲燒魚霸氣會議餐盒', drink: '珍珠大正紅茶拿鐵 (微糖微冰)', status: 'Pending' }
+        ];
+
+        // Load from LocalStorage if exists
+        const savedOrders = localStorage.getItem('orderMealData');
+        if(savedOrders) {
+            orders = JSON.parse(savedOrders);
+            currentId = orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 : 1;
+        }
+
+        // Render Table
+        function renderTable(data = orders) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding: 3rem;">暫無訂單資料</td></tr>';
+                return;
+            }
+
+            data.forEach((order, index) => {
+                const tr = document.createElement('tr');
+                const statusClass = order.status === 'OK' ? 'status-ok' : 'status-pending';
+                const statusText = order.status === 'OK' ? '<i class="fa-solid fa-check-circle"></i> 已確認' : '<i class="fa-solid fa-clock"></i> 待確認';
+                
+                tr.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td style="font-weight: 500;">${order.name}</td>
+                    <td>${order.meal}</td>
+                    <td>${order.drink}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td class="action-cell">
+                        <button class="btn-icon" onclick="editOrder(${order.id})" title="編輯"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn-icon" style="color: var(--danger);" onclick="deleteOrderPrompt(${order.id})" title="刪除"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('orderMealData', JSON.stringify(orders));
+        }
+
+        // Search Filter
+        function filterTable() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = orders.filter(o => 
+                o.name.toLowerCase().includes(q) || 
+                o.meal.toLowerCase().includes(q) ||
+                o.drink.toLowerCase().includes(q) ||
+                o.status.toLowerCase().includes(q)
+            );
+            renderTable(filtered);
+        }
+
+        // Modal Controls
+        const modal = document.getElementById('orderModal');
+        const deleteModal = document.getElementById('deleteModal');
+        const form = document.getElementById('orderForm');
+
+        function openModal() {
+            document.getElementById('modalTitle').innerText = '新增訂單';
+            form.reset();
+            document.getElementById('orderId').value = '';
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        function editOrder(id) {
+            const order = orders.find(o => o.id === id);
+            if(order) {
+                document.getElementById('modalTitle').innerText = '編輯訂單';
+                document.getElementById('orderId').value = order.id;
+                document.getElementById('name').value = order.name;
+                document.getElementById('meal').value = order.meal;
+                document.getElementById('drink').value = order.drink;
+                document.getElementById('status').value = order.status;
+                modal.classList.add('active');
+            }
+        }
+
+        // CRUD Actions
+        function saveOrder(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('orderId').value;
+            const payload = {
+                name: document.getElementById('name').value,
+                meal: document.getElementById('meal').value,
+                drink: document.getElementById('drink').value,
+                status: document.getElementById('status').value
+            };
+
+            if(id) {
+                // Update
+                const index = orders.findIndex(o => o.id == parseInt(id));
+                if(index > -1) {
+                    orders[index] = { id: parseInt(id), ...payload };
+                    showToast('訂單已更新成功！', 'success');
+                }
+            } else {
+                // Create
+                orders.push({ id: currentId++, ...payload });
+                showToast('已新增一筆訂單！', 'success');
+            }
+
+            closeModal();
+            filterTable(); // re-render with current filter
+        }
+
+        function deleteOrderPrompt(id) {
+            document.getElementById('deleteId').value = id;
+            deleteModal.classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            deleteModal.classList.remove('active');
+        }
+
+        function confirmDelete() {
+            const id = document.getElementById('deleteId').value;
+            orders = orders.filter(o => o.id !== parseInt(id));
+            closeDeleteModal();
+            filterTable();
+            showToast('訂單已刪除！', 'success');
+        }
+
+        // Toast utility
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Initial Render
+        renderTable();
+    </script>
+</body>
+</html>
