@@ -609,19 +609,16 @@
 
                     // 如果有填寫網址，就打 API 同步到 Google 試算表
                     if (GOOGLE_SCRIPT_URL.startsWith('http')) {
-                        // 使用 URLSearchParams 避免 CORS preflight (OPTIONS) 問題
-                        const formData = new URLSearchParams();
-                        formData.append('name', payload.name);
-                        formData.append('meal', payload.meal);
-                        formData.append('drink', payload.drink);
-                        formData.append('status', payload.status);
-
-                        // 發送 POST 請求給 Google Apps Script
+                        // 使用 text/plain 搭配 JSON 格式，全面繞過複雜的 CORS 防火牆檢查
                         await fetch(GOOGLE_SCRIPT_URL, {
                             method: 'POST',
-                            body: formData
+                            mode: 'no-cors', // 即使跨域也不理會安全檔版
+                            headers: {
+                                'Content-Type': 'text/plain;charset=utf-8'
+                            },
+                            body: JSON.stringify(payload) // 以 JSON 格式傳遞
                         });
-                        showToast('已新增訂單，並同步上傳至 Google 試算表！', 'success');
+                        showToast('已新增訂單，並同步發送至 Google 試算表！', 'success');
                     } else {
                         showToast('已新增訂單！(未設定 Google API，僅暫存本機)', 'success');
                     }
